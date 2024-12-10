@@ -86,6 +86,7 @@ def train(model, train_dataloader,eval_dataloader, tokenizer, optimizer, lr_sche
     Returns: results dictionary containing average training and validation perplexity and loss
     """
     # Create a gradient scaler for fp16
+    # return
     if train_config.use_fp16 and train_config.enable_fsdp:
         scaler = ShardedGradScaler()
     elif train_config.use_fp16 and not train_config.enable_fsdp:
@@ -109,6 +110,17 @@ def train(model, train_dataloader,eval_dataloader, tokenizer, optimizer, lr_sche
         train_step_loss = []
         val_step_loss = []
         val_step_perplexity = []
+    
+    # if train_config.eval_only:
+    print('Running before-training EVALUATION')
+    # return
+    eval_ppl, eval_epoch_loss, temp_val_loss, temp_step_perplexity = evaluation(model, train_config, eval_dataloader, local_rank, tokenizer, wandb_run)
+    # if train_config.save_metrics:
+    evaluation_filename = f"pre_eval_results/metrics_data_{local_rank}-{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
+    # val_loss.append(float(eval_epoch_loss))
+    # val_prep.append(float(eval_ppl))
+    print("TYPES: ", type(temp_val_loss), type(eval_epoch_loss), type(temp_step_perplexity), type(eval_ppl))
+    save_to_json(evaluation_filename, [], [], [], [], list(map(float, temp_val_loss)), float(eval_epoch_loss), list(map(float, temp_step_perplexity)), float(eval_ppl))
 
     epoch_times = []
     checkpoint_times = []
